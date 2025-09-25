@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Captura de Fotos</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f6f8;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+
+    h2 {
+      color: #333;
+    }
+
+    video {
+      width: 100%;
+      max-width: 400px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+
+    button {
+      background-color: #0078D4;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin: 10px 5px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    button:hover {
+      background-color: #005a9e;
+    }
+
+    .foto-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .foto-item {
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      margin: 10px;
+      padding: 10px;
+      width: 200px;
+    }
+
+    .foto-item img {
+      width: 100%;
+      border-radius: 5px;
+    }
+
+    .foto-item button {
+      width: 45%;
+      margin: 5px 2%;
+    }
+  </style>
+</head>
+<body>
+  <h2>Capturar Fotos</h2>
+  <video id="video" autoplay></video>
+  <br>
+  <button onclick="tirarFoto()">📸 Tirar Foto</button>
+
+  <div id="fotos" class="foto-container"></div>
+
+  <script>
+    const video = document.getElementById('video');
+    const fotosContainer = document.getElementById('fotos');
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        video.srcObject = stream;
+      })
+      .catch(err => {
+        alert("Erro ao acessar a câmera: " + err);
+      });
+
+    function tirarFoto() {
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const context = canvas.getContext('2d');
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const img = document.createElement('img');
+      img.src = canvas.toDataURL('image/png');
+
+      const salvarBtn = document.createElement('button');
+      salvarBtn.textContent = '💾 Salvar';
+      salvarBtn.onclick = () => {
+        const link = document.createElement('a');
+        link.href = img.src;
+        link.download = `foto_${Date.now()}.png`;
+        link.click();
+      };
+
+      const excluirBtn = document.createElement('button');
+      excluirBtn.textContent = '🗑️ Excluir';
+      excluirBtn.onclick = () => {
+        fotosContainer.removeChild(fotoItem);
+      };
+
+      const fotoItem = document.createElement('div');
+      fotoItem.className = 'foto-item';
+      fotoItem.appendChild(img);
+      fotoItem.appendChild(salvarBtn);
+      fotoItem.appendChild(excluirBtn);
+
+      fotosContainer.appendChild(fotoItem);
+    }
+  </script>
+</body>
+</html>
+
