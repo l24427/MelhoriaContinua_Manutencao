@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Captura de Fotos</title>
+  <title>Captura de Fotos e Vídeos</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -11,18 +11,15 @@
       padding: 20px;
       text-align: center;
     }
-
     h2 {
       color: #333;
     }
-
     video {
       width: 100%;
       max-width: 400px;
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0,0,0,0.2);
     }
-
     button {
       background-color: #0078D4;
       color: white;
@@ -32,20 +29,18 @@
       border-radius: 5px;
       cursor: pointer;
       font-size: 14px;
+      transition: background 0.2s;
     }
-
     button:hover {
       background-color: #005a9e;
     }
-
-    .foto-container {
+    .media-container {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
       margin-top: 20px;
     }
-
-    .foto-item {
+    .media-item {
       background-color: white;
       border-radius: 10px;
       box-shadow: 0 0 8px rgba(0,0,0,0.1);
@@ -53,38 +48,44 @@
       padding: 10px;
       width: 200px;
     }
-
-    .foto-item img {
+    .media-item img, .media-item video {
       width: 100%;
       border-radius: 5px;
     }
-
-    .foto-item button {
+    .media-item button {
       width: 45%;
       margin: 5px 2%;
     }
   </style>
 </head>
 <body>
-  <h2>Capturar Fotos</h2>
-  <video id="video" autoplay></video>
+  <h2>Capturar Fotos e Vídeos</h2>
+  <video id="video" autoplay muted></video>
   <br>
   <button onclick="tirarFoto()">📸 Tirar Foto</button>
+  <button id="btnGravar" onclick="alternarGravacao()">🎥 Gravar Vídeo</button>
 
-  <div id="fotos" class="foto-container"></div>
+  <div id="midias" class="media-container"></div>
 
   <script>
     const video = document.getElementById('video');
-    const fotosContainer = document.getElementById('fotos');
+    const midiasContainer = document.getElementById('midias');
+    const btnGravar = document.getElementById('btnGravar');
+    let mediaRecorder;
+    let gravando = false;
+    let chunks = [];
 
-    navigator.mediaDevices.getUserMedia({ video: true })
+    // Ativa a câmera e microfone
+    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
       .then(stream => {
         video.srcObject = stream;
+        window.streamAtual = stream;
       })
       .catch(err => {
         alert("Erro ao acessar a câmera: " + err);
       });
 
+    // Foto
     function tirarFoto() {
       const canvas = document.createElement('canvas');
       canvas.width = video.videoWidth;
@@ -107,16 +108,69 @@
       const excluirBtn = document.createElement('button');
       excluirBtn.textContent = '🗑️ Excluir';
       excluirBtn.onclick = () => {
-        fotosContainer.removeChild(fotoItem);
+        midiasContainer.removeChild(mediaItem);
       };
 
-      const fotoItem = document.createElement('div');
-      fotoItem.className = 'foto-item';
-      fotoItem.appendChild(img);
-      fotoItem.appendChild(salvarBtn);
-      fotoItem.appendChild(excluirBtn);
+      const mediaItem = document.createElement('div');
+      mediaItem.className = 'media-item';
+      mediaItem.appendChild(img);
+      mediaItem.appendChild(salvarBtn);
+      mediaItem.appendChild(excluirBtn);
 
-      fotosContainer.appendChild(fotoItem);
+      midiasContainer.appendChild(mediaItem);
+    }
+
+    // Vídeo
+    function alternarGravacao() {
+      if (!gravando) {
+        chunks = [];
+        mediaRecorder = new MediaRecorder(window.streamAtual);
+        mediaRecorder.ondataavailable = e => {
+          if (e.data.size > 0) chunks.push(e.data);
+        };
+        mediaRecorder.onstop = salvarVideo;
+        mediaRecorder.start();
+        gravando = true;
+        btnGravar.textContent = "⏹️ Parar Gravação";
+        btnGravar.style.backgroundColor = "#d40000";
+      } else {
+        mediaRecorder.stop();
+        gravando = false;
+        btnGravar.textContent = "🎥 Gravar Vídeo";
+        btnGravar.style.backgroundColor = "#0078D4";
+      }
+    }
+
+    function salvarVideo() {
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      const url = URL.createObjectURL(blob);
+
+      const videoEl = document.createElement('video');
+      videoEl.src = url;
+      videoEl.controls = true;
+
+      const salvarBtn = document.createElement('button');
+      salvarBtn.textContent = '💾 Salvar';
+      salvarBtn.onclick = () => {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `video_${Date.now()}.webm`;
+        link.click();
+      };
+
+      const excluirBtn = document.createElement('button');
+      excluirBtn.textContent = '🗑️ Excluir';
+      excluirBtn.onclick = () => {
+        midiasContainer.removeChild(mediaItem);
+      };
+
+      const mediaItem = document.createElement('div');
+      mediaItem.className = 'media-item';
+      mediaItem.appendChild(videoEl);
+      mediaItem.appendChild(salvarBtn);
+      mediaItem.appendChild(excluirBtn);
+
+      midiasContainer.appendChild(mediaItem);
     }
   </script>
 </body>
